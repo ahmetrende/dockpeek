@@ -49,6 +49,7 @@ public struct UIStrings: Sendable {
     public let screenRecordingMissingHelp: String
     public let about: String
     public let aboutText: String
+    public let viewOnGitHub: String
     public let hideWindow: String
     public let quit: String
     public let updateNow: String
@@ -84,6 +85,7 @@ public struct UIStrings: Sendable {
             screenRecordingMissingHelp = "Without Screen Recording, previews show app icons instead of thumbnails."
             about = "About"
             aboutText = "Hover an app in the Dock to see its windows. Click a preview to bring that window to the front."
+            viewOnGitHub = "View on GitHub"
             hideWindow = "Hide window"
             quit = "Quit DockPeek"
             versionLabel = "Version"
@@ -123,6 +125,7 @@ public struct UIStrings: Sendable {
             screenRecordingMissingHelp = "Ekran Kaydı izni olmadan önizlemede küçük resim yerine uygulama simgesi görünür."
             about = "Hakkında"
             aboutText = "Dock'taki bir uygulamanın üstüne gel, pencerelerini gör. Bir önizlemeye tıkla, o pencere öne gelsin."
+            viewOnGitHub = "GitHub'da gör"
             hideWindow = "Pencereyi gizle"
             quit = "DockPeek'ten çık"
             versionLabel = "Sürüm"

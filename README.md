@@ -29,7 +29,7 @@ DockPeek is not notarized by Apple, because that needs a paid account. So macOS 
 3. Scroll down to **Security**. Find *"DockPeek" was blocked to protect your Mac.* Click **Open Anyway** next to it.
 4. Confirm with your password or Touch ID.
 
-After each update, macOS blocks the new version once. Do these steps again.
+Updates do not need these steps. If macOS blocks a new version after an update, do them again.
 
 Or, before the first launch, run this once in Terminal instead:
 
@@ -72,7 +72,7 @@ It shows windows on the current desktop, minimized windows and windows of hidden
 - DockPeek checks GitHub 10 seconds after launch, then once a day.
 - To check now, open DockPeek again. Click **Check Now** next to **Updates**.
 - When there is a new version, it asks: **Update Now** or **Later**.
-- **Update Now**: it downloads the new version and checks that it is signed with the same certificate. Then it replaces itself and restarts. Permissions stay. If you installed with Open Anyway, macOS blocks the new version once. Do [Open Anyway](#open-anyway) again.
+- **Update Now**: it downloads the new version and checks that it is signed with the same certificate. Then it replaces itself and restarts. Permissions stay.
 - **Later**: it asks again after a day.
 - It talks only to GitHub: `api.github.com` for the check, and the release download for an update. No account, no tracking.
 

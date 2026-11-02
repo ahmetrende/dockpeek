@@ -8,7 +8,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     var onAccessibilityChanged: (() -> Void)?
 
     private static let width: CGFloat = 460
-    private static let repository = "github.com/ahmetrende/dockpeek"
+    private static let repository = URL(string: "https://github.com/ahmetrende/dockpeek")!
     private var strings: UIStrings
     private let window: NSWindow
     /// Nil for builds made from source. They do not check for updates, so the Updates row is left out.
@@ -180,14 +180,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     private func about() -> NSView {
         let text = NSTextField(wrappingLabelWithString: strings.aboutText)
         text.preferredMaxLayoutWidth = Self.width - 40
-        // A link label, not a borderless button: a button's inset moves it off the text's left edge.
-        let link = NSTextField(labelWithAttributedString: NSAttributedString(
-            string: Self.repository,
-            attributes: [.link: URL(string: "https://\(Self.repository)") as Any, .font: NSFont.systemFont(ofSize: 11)]
-        ))
-        link.isSelectable = true
-        // Without this a click shows the text in the field's plain style: no link color, the default size.
-        link.allowsEditingTextAttributes = true
+        let link = LinkLabel(title: "\(strings.viewOnGitHub) ↗", url: Self.repository)
         let stack = NSStackView(views: [sectionHeading(strings.about), text, link])
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -395,6 +388,42 @@ private final class UpdatesRow {
         }
         icon.isHidden = icon.image == nil
         button.isEnabled = check != .checking
+    }
+}
+
+/// A text link: link color, the pointing-hand cursor, opens the URL on click.
+/// A label, not a borderless button: a button's inset moves it off the text's left edge.
+/// Not selectable: a selectable label shows an I-beam cursor and drops the link style on click.
+private final class LinkLabel: NSTextField {
+    private let url: URL
+
+    init(title: String, url: URL) {
+        self.url = url
+        super.init(frame: .zero)
+        isEditable = false
+        isSelectable = false
+        isBordered = false
+        drawsBackground = false
+        font = .systemFont(ofSize: 11)
+        textColor = .linkColor
+        stringValue = title
+        setAccessibilityRole(.link)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        NSWorkspace.shared.open(url)
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        NSWorkspace.shared.open(url)
     }
 }
 

@@ -53,6 +53,11 @@ import DockPeekCore
     #expect(turkish.updateStatus(.failed) == "Denetlenemedi")
 }
 
+@Test func gitHubLinkText() {
+    #expect(UIStrings(.english).viewOnGitHub == "View on GitHub")
+    #expect(UIStrings(.turkish).viewOnGitHub == "GitHub'da gör")
+}
+
 @Test func automaticChoiceFollowsTheMac() {
     #expect(LanguageChoice.automatic.resolve(preferredLanguages: ["tr-TR"]) == .turkish)
     #expect(LanguageChoice.automatic.resolve(preferredLanguages: ["en-TR"]) == .english)
