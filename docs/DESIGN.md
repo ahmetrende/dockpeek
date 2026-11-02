@@ -28,6 +28,7 @@ Pure logic lives in `DockPeekCore` and has unit tests. AppKit, Accessibility and
 ## Distribution and updates
 
 - Releases: `scripts/release.sh` publishes `DockPeek.dmg` (people) and `DockPeek.zip` (updates, agents) on GitHub.
+- DMG window: DockPeek, an arrow and Applications on `Resources/DMGBackground.tiff` (drawn by `scripts/make-dmg-background.swift`). `scripts/make-dmg.sh` lets Finder write the layout, then stops if `.DS_Store` names the user or the per-user temp folder. The path bar is a global Finder setting, so the script leaves it alone; the background keeps its bottom 30 pt empty for it.
 - Signing: every build is signed with the self-signed "DockPeek Signing" certificate (20 years, no email). macOS keeps permissions because the signature requirement stays the same.
 - No notarization: the first launch from the DMG needs "Open Anyway". `scripts/install.sh` downloads with curl, which sets no quarantine flag, so it does not.
 - Update check: release builds only (`DockPeekReleaseBuild` in Info.plist). 10 s after launch, then every 24 h. `GET api.github.com/repos/ahmetrende/dockpeek/releases/latest`, no login.

@@ -37,10 +37,7 @@ rm -rf "$OUT"
 "$ROOT/scripts/check-package.sh" "$OUT/DockPeek.app" --release
 
 ditto -c -k --keepParent "$OUT/DockPeek.app" "$OUT/DockPeek.zip"
-mkdir "$OUT/dmg"
-ditto "$OUT/DockPeek.app" "$OUT/dmg/DockPeek.app"
-ln -s /Applications "$OUT/dmg/Applications"
-hdiutil create -quiet -volname DockPeek -srcfolder "$OUT/dmg" -format UDZO -ov "$OUT/DockPeek.dmg"
+"$ROOT/scripts/make-dmg.sh" "$OUT/DockPeek.app" "$OUT/DockPeek.dmg"
 
 if [[ -n "$DRY_RUN" ]]; then
     echo "Dry run: not published. Files are in $OUT"
