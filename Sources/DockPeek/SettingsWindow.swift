@@ -186,6 +186,8 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             attributes: [.link: URL(string: "https://\(Self.repository)") as Any, .font: NSFont.systemFont(ofSize: 11)]
         ))
         link.isSelectable = true
+        // Without this a click shows the text in the field's plain style: no link color, the default size.
+        link.allowsEditingTextAttributes = true
         let stack = NSStackView(views: [sectionHeading(strings.about), text, link])
         stack.orientation = .vertical
         stack.alignment = .leading
