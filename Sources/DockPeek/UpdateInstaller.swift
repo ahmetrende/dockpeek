@@ -21,16 +21,21 @@ final class UpdateInstaller {
 
     /// Throws only `UpdateFailure`. On success DockPeek quits and the new version opens.
     /// Every failure logs its cause first, because `UpdateFailure` keeps only the step name.
-    func install(from zipURL: URL) async throws {
+    /// `progress` gets each step on the main thread, for the update window.
+    func install(from zipURL: URL, progress: @escaping @MainActor (UpdateStep) -> Void) async throws {
         let files = FileManager.default
         let work = files.temporaryDirectory.appendingPathComponent("DockPeek-update-\(UUID().uuidString)")
         defer { try? files.removeItem(at: work) }
 
         // 1. Download.
+        progress(.downloading(fraction: nil))
         let zip = work.appendingPathComponent(UpdateCheck.assetName)
         do {
             try files.createDirectory(at: work, withIntermediateDirectories: true)
-            let (downloaded, response) = try await URLSession.shared.download(from: zipURL)
+            let reporter = DownloadProgress { fraction in
+                Task { @MainActor in progress(.downloading(fraction: fraction)) }
+            }
+            let (downloaded, response) = try await URLSession.shared.download(from: zipURL, delegate: reporter)
             // 0 when the response is not HTTP.
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             guard status == 200 else {
@@ -45,9 +50,10 @@ final class UpdateInstaller {
             throw UpdateFailure.download
         }
 
-        // 2. Unpack.
+        // 2. Unpack. Steps 2 and 3 run off the main thread, so the update window keeps moving.
+        progress(.verifying)
         let newApp = work.appendingPathComponent("DockPeek.app")
-        let unpackStatus = Self.run("/usr/bin/ditto", ["-x", "-k", zip.path, work.path])
+        let unpackStatus = await Task.detached { Self.run("/usr/bin/ditto", ["-x", "-k", zip.path, work.path]) }.value
         guard unpackStatus == 0 else {
             Log.update.error("unpack failed: ditto exit status \(unpackStatus, privacy: .public)")
             throw UpdateFailure.unpack
@@ -58,7 +64,9 @@ final class UpdateInstaller {
         }
 
         // 3. Check: same signer as this app, and a newer version.
-        guard Self.isSignedLikeRunningApp(newApp) else { throw UpdateFailure.signature }
+        guard await Task.detached(operation: { Self.isSignedLikeRunningApp(newApp) }).value else {
+            throw UpdateFailure.signature
+        }
         let text = Bundle(url: newApp)?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
         guard let text, let newVersion = AppVersion(text), newVersion > current else {
             Log.update.error("""
@@ -69,6 +77,7 @@ final class UpdateInstaller {
         }
 
         // 4. Write access. A copy that runs from a disk image or a quarantine location cannot update itself.
+        progress(.installing)
         let target = Bundle.main.bundleURL
         let folder = target.deletingLastPathComponent().path
         guard files.isWritableFile(atPath: folder),
@@ -108,7 +117,7 @@ final class UpdateInstaller {
     /// The new app must carry a valid signature that meets this app's designated requirement:
     /// the same bundle identifier and the same certificate.
     /// Logs the failing call and its OSStatus.
-    private static func isSignedLikeRunningApp(_ url: URL) -> Bool {
+    nonisolated private static func isSignedLikeRunningApp(_ url: URL) -> Bool {
         var running: SecCode?
         var runningStatic: SecStaticCode?
         var requirement: SecRequirement?
@@ -126,7 +135,7 @@ final class UpdateInstaller {
     }
 
     /// True when the call succeeded. Otherwise logs the call name and its OSStatus.
-    private static func succeeded(_ status: OSStatus, _ call: String) -> Bool {
+    nonisolated private static func succeeded(_ status: OSStatus, _ call: String) -> Bool {
         if status != errSecSuccess {
             Log.update.error("signature check failed: \(call, privacy: .public) returned OSStatus \(status, privacy: .public)")
         }
@@ -134,7 +143,7 @@ final class UpdateInstaller {
     }
 
     /// Runs the tool and returns its exit status. Returns -1 when the tool could not start.
-    private static func run(_ tool: String, _ arguments: [String]) -> Int32 {
+    nonisolated private static func run(_ tool: String, _ arguments: [String]) -> Int32 {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: tool)
         process.arguments = arguments
@@ -149,8 +158,26 @@ final class UpdateInstaller {
     }
 
     /// Error domain, code and text, for example "NSURLErrorDomain -1009: The Internet connection appears to be offline."
-    private static func describe(_ error: Error) -> String {
+    nonisolated private static func describe(_ error: Error) -> String {
         let nsError = error as NSError
         return "\(nsError.domain) \(nsError.code): \(error.localizedDescription)"
+    }
+}
+
+/// Reports how much of the download has arrived. URLSession calls it on its own queue.
+private final class DownloadProgress: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let report: @Sendable (Double?) -> Void
+    /// Set once, when the task is created, before any progress arrives.
+    private var observation: NSKeyValueObservation?
+
+    init(report: @escaping @Sendable (Double?) -> Void) {
+        self.report = report
+    }
+
+    func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
+        observation = task.progress.observe(\.fractionCompleted) { [report] progress, _ in
+            // The total is unknown (-1) until the server sends the size.
+            report(progress.totalUnitCount > 0 ? progress.fractionCompleted : nil)
+        }
     }
 }

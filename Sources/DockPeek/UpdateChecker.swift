@@ -122,9 +122,12 @@ final class UpdateChecker {
             storeDeclined(DeclinedUpdate(version: version, at: lastCheck ?? Date()))
             return
         }
+        let progressWindow = UpdateProgressWindow(version: version.description, strings: strings)
+        progressWindow.show()
         do {
-            try await installer.install(from: zipURL)
+            try await installer.install(from: zipURL) { step in progressWindow.update(step) }
         } catch {
+            progressWindow.close()
             showFailure(error as? UpdateFailure ?? .download)
         }
     }

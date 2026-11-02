@@ -61,6 +61,11 @@ public struct UIStrings: Sendable {
     private let upToDate: String
     private let availableShortFormat: String
     private let checkFailed: String
+    private let updatingToFormat: String
+    private let downloading: String
+    private let percentFormat: String
+    private let verifying: String
+    private let installing: String
     private let availableFormat: String
     private let youHaveFormat: String
     private let keepsFormat: String
@@ -98,6 +103,11 @@ public struct UIStrings: Sendable {
             upToDate = "Up to date"
             availableShortFormat = "%@ available"
             checkFailed = "Could not check"
+            updatingToFormat = "Updating DockPeek to %@"
+            downloading = "Downloading…"
+            percentFormat = "%@%"
+            verifying = "Verifying…"
+            installing = "Installing…"
             availableFormat = "DockPeek %@ is available"
             youHaveFormat = "You have %@."
             keepsFormat = "DockPeek keeps version %@."
@@ -138,6 +148,11 @@ public struct UIStrings: Sendable {
             upToDate = "Güncel"
             availableShortFormat = "%@ hazır"
             checkFailed = "Denetlenemedi"
+            updatingToFormat = "DockPeek %@ sürümüne güncelleniyor"
+            downloading = "İndiriliyor…"
+            percentFormat = "%%@"
+            verifying = "Doğrulanıyor…"
+            installing = "Kuruluyor…"
             availableFormat = "DockPeek %@ hazır"
             youHaveFormat = "Sende %@ var."
             keepsFormat = "DockPeek %@ sürümünde kalıyor."
@@ -173,6 +188,25 @@ public struct UIStrings: Sendable {
         case .upToDate: upToDate
         case .available(let version): availableShortFormat.replacingOccurrences(of: "%@", with: version.description)
         case .failed: checkFailed
+        }
+    }
+
+    public func updatingTo(_ version: String) -> String {
+        updatingToFormat.replacingOccurrences(of: "%@", with: version)
+    }
+
+    /// The line under the progress bar. The percent is rounded down, so 100 % shows only when done.
+    public func updateStepText(_ step: UpdateStep) -> String {
+        switch step {
+        case .downloading(nil):
+            return downloading
+        case .downloading(let fraction?):
+            let percent = Int((min(max(fraction, 0), 1) * 100).rounded(.down))
+            return "\(downloading) \(percentFormat.replacingOccurrences(of: "%@", with: String(percent)))"
+        case .verifying:
+            return verifying
+        case .installing:
+            return installing
         }
     }
 

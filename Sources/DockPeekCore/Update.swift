@@ -89,6 +89,16 @@ public enum UpdateCheckStatus: Equatable, Sendable {
     case failed
 }
 
+/// What the update window shows while an update runs.
+public enum UpdateStep: Equatable, Sendable {
+    /// `fraction` runs from 0 to 1. It is nil while the download size is not known.
+    case downloading(fraction: Double?)
+    /// Unpacking and checking the signature and the version.
+    case verifying
+    /// Swapping the app. DockPeek restarts right after.
+    case installing
+}
+
 /// The person chose "Later" for this version at this time.
 public struct DeclinedUpdate: Equatable, Sendable {
     public let version: AppVersion

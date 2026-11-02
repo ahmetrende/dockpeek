@@ -35,6 +35,7 @@ Pure logic lives in `DockPeekCore` and has unit tests. AppKit, Accessibility and
 - Question: Update Now or Later. Later silences that version for 24 h.
 - Check Now: the Updates row in the settings window (release builds only) checks at once and restarts the 24 h timer. It asks even about a version put off with Later. The row shows Checking…, Up to date, the new version, or Could not check; the reason goes to the log.
 - Install: download the zip, unpack it, check that the signature meets the running app's designated requirement and that the version is newer, swap the bundle, restart through a small shell helper. The settings window opens once after an update.
+- Progress: a small window shows the download percent (from the URLSession task's progress), then Verifying… and Installing…. Unpacking and the signature check run off the main thread, so the window keeps moving.
 - Nested code: installed copies check updates with kSecCSCheckNestedCode. Any helper, framework or XPC service added later must be signed on its own, or every installed copy refuses the update.
 - Errors: a failed check only logs. A failed install shows the reason and keeps the installed version.
 - Private data: builds are stripped of debug paths. `scripts/check-package.sh` blocks a release with user paths, an email in the certificate or unknown Info.plist keys.

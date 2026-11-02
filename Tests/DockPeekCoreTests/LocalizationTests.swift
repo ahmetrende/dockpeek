@@ -53,6 +53,29 @@ import DockPeekCore
     #expect(turkish.updateStatus(.failed) == "Denetlenemedi")
 }
 
+@Test func updateProgressTexts() {
+    let english = UIStrings(.english)
+    #expect(english.updatingTo("0.2.3") == "Updating DockPeek to 0.2.3")
+    #expect(english.updateStepText(.downloading(fraction: nil)) == "Downloading…")
+    #expect(english.updateStepText(.downloading(fraction: 0.456)) == "Downloading… 45%")
+    #expect(english.updateStepText(.verifying) == "Verifying…")
+    #expect(english.updateStepText(.installing) == "Installing…")
+    let turkish = UIStrings(.turkish)
+    #expect(turkish.updatingTo("0.2.3") == "DockPeek 0.2.3 sürümüne güncelleniyor")
+    #expect(turkish.updateStepText(.downloading(fraction: nil)) == "İndiriliyor…")
+    // Turkish puts the percent sign before the number.
+    #expect(turkish.updateStepText(.downloading(fraction: 0.456)) == "İndiriliyor… %45")
+    #expect(turkish.updateStepText(.verifying) == "Doğrulanıyor…")
+    #expect(turkish.updateStepText(.installing) == "Kuruluyor…")
+}
+
+@Test func downloadPercentStaysInRange() {
+    let english = UIStrings(.english)
+    #expect(english.updateStepText(.downloading(fraction: 1)) == "Downloading… 100%")
+    #expect(english.updateStepText(.downloading(fraction: 1.2)) == "Downloading… 100%")
+    #expect(english.updateStepText(.downloading(fraction: -0.1)) == "Downloading… 0%")
+}
+
 @Test func gitHubLinkText() {
     #expect(UIStrings(.english).viewOnGitHub == "View on GitHub")
     #expect(UIStrings(.turkish).viewOnGitHub == "GitHub'da gör")

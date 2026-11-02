@@ -72,7 +72,7 @@ It shows windows on the current desktop, minimized windows and windows of hidden
 - DockPeek checks GitHub 10 seconds after launch, then once a day.
 - To check now, open DockPeek again. Click **Check Now** next to **Updates**.
 - When there is a new version, it asks: **Update Now** or **Later**.
-- **Update Now**: it downloads the new version and checks that it is signed with the same certificate. Then it replaces itself and restarts. Permissions stay.
+- **Update Now**: it downloads the new version and checks that it is signed with the same certificate. Then it replaces itself and restarts. A small window shows the progress. Permissions stay.
 - **Later**: it asks again after a day.
 - It talks only to GitHub: `api.github.com` for the check, and the release download for an update. No account, no tracking.
 
