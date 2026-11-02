@@ -70,6 +70,7 @@ It shows windows on the current desktop, minimized windows and windows of hidden
 ## Updates
 
 - DockPeek checks GitHub 10 seconds after launch, then once a day.
+- To check now, open DockPeek again. Click **Check Now** next to **Updates**.
 - When there is a new version, it asks: **Update Now** or **Later**.
 - **Update Now**: it downloads the new version and checks that it is signed with the same certificate. Then it replaces itself and restarts. Permissions stay. If you installed with Open Anyway, macOS blocks the new version once. Do [Open Anyway](#open-anyway) again.
 - **Later**: it asks again after a day.

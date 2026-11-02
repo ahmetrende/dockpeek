@@ -12,6 +12,8 @@ final class UpdateChecker {
 
     /// Runs right before the question opens, so the preview panel can close first.
     var onWillPrompt: (() -> Void)?
+    /// The settings window reads this while it is open.
+    private(set) var status: UpdateCheckStatus = .idle
 
     private let current: AppVersion
     private let installer: UpdateInstaller
@@ -54,21 +56,31 @@ final class UpdateChecker {
         schedule(after: max(UpdatePolicy.firstCheckDelay, UpdatePolicy.nextCheckDelay(lastCheck: lastCheck, now: Date())))
     }
 
-    private func check() {
+    /// The Check Now button in the settings window. It also restarts the daily timer.
+    func checkNow() {
+        Log.update.notice("check requested")
+        check(manual: true)
+    }
+
+    private func check(manual: Bool = false) {
         lastCheck = Date()
         schedule(after: UpdatePolicy.checkInterval)
         guard !busy else { return }
         busy = true
+        status = .checking
         Task { @MainActor in
             let decision = await fetchDecision()
             switch decision {
             case .upToDate:
                 Log.update.notice("up to date at \(self.current.description, privacy: .public)")
+                status = .upToDate
             case .unusable(let reason):
                 Log.update.error("update check unusable: \(reason, privacy: .public)")
+                status = .failed
             case .available(let version, let zipURL):
                 Log.update.notice("version \(version.description, privacy: .public) is available")
-                await askAndInstall(version, zipURL)
+                status = .available(version)
+                await askAndInstall(version, zipURL, manual: manual)
             }
             busy = false
         }
@@ -92,8 +104,8 @@ final class UpdateChecker {
         UserDefaults.standard.string(forKey: Self.feedOverrideKey).flatMap(URL.init(string:)) ?? Self.latestReleaseURL
     }
 
-    private func askAndInstall(_ version: AppVersion, _ zipURL: URL) async {
-        guard UpdatePolicy.shouldAsk(about: version, declined: storedDeclined(), now: Date()) else {
+    private func askAndInstall(_ version: AppVersion, _ zipURL: URL, manual: Bool) async {
+        guard UpdatePolicy.shouldAsk(about: version, declined: storedDeclined(), now: Date(), manual: manual) else {
             Log.update.notice("version \(version.description, privacy: .public) was put off")
             return
         }

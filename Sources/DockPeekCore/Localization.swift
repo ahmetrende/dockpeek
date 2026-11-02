@@ -54,6 +54,12 @@ public struct UIStrings: Sendable {
     public let updateNow: String
     public let later: String
     public let updateFailedTitle: String
+    public let updates: String
+    public let checkNow: String
+    private let checking: String
+    private let upToDate: String
+    private let availableShortFormat: String
+    private let checkFailed: String
     private let availableFormat: String
     private let youHaveFormat: String
     private let keepsFormat: String
@@ -84,6 +90,12 @@ public struct UIStrings: Sendable {
             updateNow = "Update Now"
             later = "Later"
             updateFailedTitle = "Update failed"
+            updates = "Updates"
+            checkNow = "Check Now"
+            checking = "Checking…"
+            upToDate = "Up to date"
+            availableShortFormat = "%@ available"
+            checkFailed = "Could not check"
             availableFormat = "DockPeek %@ is available"
             youHaveFormat = "You have %@."
             keepsFormat = "DockPeek keeps version %@."
@@ -117,6 +129,12 @@ public struct UIStrings: Sendable {
             updateNow = "Şimdi güncelle"
             later = "Sonra"
             updateFailedTitle = "Güncelleme yapılamadı"
+            updates = "Güncellemeler"
+            checkNow = "Şimdi denetle"
+            checking = "Denetleniyor…"
+            upToDate = "Güncel"
+            availableShortFormat = "%@ hazır"
+            checkFailed = "Denetlenemedi"
             availableFormat = "DockPeek %@ hazır"
             youHaveFormat = "Sende %@ var."
             keepsFormat = "DockPeek %@ sürümünde kalıyor."
@@ -142,6 +160,17 @@ public struct UIStrings: Sendable {
 
     public func updateAvailable(_ version: String) -> String {
         availableFormat.replacingOccurrences(of: "%@", with: version)
+    }
+
+    /// The text next to Check Now. Empty before the first check.
+    public func updateStatus(_ status: UpdateCheckStatus) -> String {
+        switch status {
+        case .idle: ""
+        case .checking: checking
+        case .upToDate: upToDate
+        case .available(let version): availableShortFormat.replacingOccurrences(of: "%@", with: version.description)
+        case .failed: checkFailed
+        }
     }
 
     public func youHave(_ version: String) -> String {

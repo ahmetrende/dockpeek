@@ -8,8 +8,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var thumbnailer = Thumbnailer(limit: settings.cacheLimit)
     private lazy var panel = PreviewPanel(gap: settings.panelGap)
     private lazy var machine = HoverStateMachine(openDelay: settings.openDelay, closeDelay: settings.closeDelay)
-    private lazy var settingsWindow = SettingsWindowController()
     private let updateChecker = UpdateChecker()
+    private lazy var settingsWindow = SettingsWindowController(updateChecker: updateChecker)
     private var timer: Timer?
     private var iconFrame: CGRect = .zero
     private var lastHoveredPID: pid_t?

@@ -79,6 +79,16 @@ public enum UpdateCheck {
     }
 }
 
+/// What the Updates row in the settings window shows about the last check.
+public enum UpdateCheckStatus: Equatable, Sendable {
+    case idle
+    case checking
+    case upToDate
+    case available(AppVersion)
+    /// The check got no usable answer. The reason goes to the log only.
+    case failed
+}
+
 /// The person chose "Later" for this version at this time.
 public struct DeclinedUpdate: Equatable, Sendable {
     public let version: AppVersion
@@ -97,8 +107,9 @@ public enum UpdatePolicy {
     public static let laterQuietPeriod: TimeInterval = 24 * 60 * 60
 
     /// "Later" silences one version for a day. A newer version asks at once.
-    public static func shouldAsk(about version: AppVersion, declined: DeclinedUpdate?, now: Date) -> Bool {
-        guard let declined, declined.version == version else { return true }
+    /// A check from the Check Now button always asks: the person asked for it.
+    public static func shouldAsk(about version: AppVersion, declined: DeclinedUpdate?, now: Date, manual: Bool = false) -> Bool {
+        guard !manual, let declined, declined.version == version else { return true }
         return now.timeIntervalSince(declined.at) >= laterQuietPeriod
     }
 

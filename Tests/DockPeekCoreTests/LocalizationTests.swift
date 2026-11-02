@@ -34,6 +34,25 @@ import DockPeekCore
     #expect(turkish.lastCommit("2026-10-31 12:23") == "2026-10-31 12:23 UTC")
 }
 
+@Test func updatesRowTexts() {
+    let english = UIStrings(.english)
+    #expect(english.updates == "Updates")
+    #expect(english.checkNow == "Check Now")
+    #expect(english.updateStatus(.idle) == "")
+    #expect(english.updateStatus(.checking) == "Checking…")
+    #expect(english.updateStatus(.upToDate) == "Up to date")
+    #expect(english.updateStatus(.available(AppVersion("0.2.2")!)) == "0.2.2 available")
+    #expect(english.updateStatus(.failed) == "Could not check")
+    let turkish = UIStrings(.turkish)
+    #expect(turkish.updates == "Güncellemeler")
+    #expect(turkish.checkNow == "Şimdi denetle")
+    #expect(turkish.updateStatus(.idle) == "")
+    #expect(turkish.updateStatus(.checking) == "Denetleniyor…")
+    #expect(turkish.updateStatus(.upToDate) == "Güncel")
+    #expect(turkish.updateStatus(.available(AppVersion("0.2.2")!)) == "0.2.2 hazır")
+    #expect(turkish.updateStatus(.failed) == "Denetlenemedi")
+}
+
 @Test func automaticChoiceFollowsTheMac() {
     #expect(LanguageChoice.automatic.resolve(preferredLanguages: ["tr-TR"]) == .turkish)
     #expect(LanguageChoice.automatic.resolve(preferredLanguages: ["en-TR"]) == .english)

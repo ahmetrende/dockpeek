@@ -33,6 +33,7 @@ Pure logic lives in `DockPeekCore` and has unit tests. AppKit, Accessibility and
 - No notarization: the first launch from the DMG needs "Open Anyway". `scripts/install.sh` downloads with curl, which sets no quarantine flag, so it does not.
 - Update check: release builds only (`DockPeekReleaseBuild` in Info.plist). 10 s after launch, then every 24 h. `GET api.github.com/repos/ahmetrende/dockpeek/releases/latest`, no login.
 - Question: Update Now or Later. Later silences that version for 24 h.
+- Check Now: the Updates row in the settings window (release builds only) checks at once and restarts the 24 h timer. It asks even about a version put off with Later. The row shows Checking…, Up to date, the new version, or Could not check; the reason goes to the log.
 - Install: download the zip, unpack it, check that the signature meets the running app's designated requirement and that the version is newer, swap the bundle, restart through a small shell helper. The settings window opens once after an update.
 - Nested code: installed copies check updates with kSecCSCheckNestedCode. Any helper, framework or XPC service added later must be signed on its own, or every installed copy refuses the update.
 - Errors: a failed check only logs. A failed install shows the reason and keeps the installed version.

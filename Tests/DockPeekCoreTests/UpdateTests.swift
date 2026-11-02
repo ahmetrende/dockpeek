@@ -86,6 +86,11 @@ private let declinedAt = Date(timeIntervalSince1970: 1_000_000)
     #expect(UpdatePolicy.shouldAsk(about: AppVersion("0.2.2")!, declined: declined, now: declinedAt + 60))
 }
 
+@Test func checkNowAsksEvenAfterLater() {
+    let declined = DeclinedUpdate(version: AppVersion("0.2.1")!, at: declinedAt)
+    #expect(UpdatePolicy.shouldAsk(about: AppVersion("0.2.1")!, declined: declined, now: declinedAt + 60, manual: true))
+}
+
 private let lastCheck = Date(timeIntervalSince1970: 2_000_000)
 
 @Test func wakeChecksAtOnceWhenADayHasPassed() {

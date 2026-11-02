@@ -11,18 +11,22 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     private static let repository = "github.com/ahmetrende/dockpeek"
     private var strings: UIStrings
     private let window: NSWindow
+    /// Nil for builds made from source. They do not check for updates, so the Updates row is left out.
+    private let updateChecker: UpdateChecker?
     private let loginSwitch = NSSwitch()
     private let languagePopup = NSPopUpButton()
     private var accessibilityRow: PermissionRow?
     private var screenRow: PermissionRow?
+    private var updatesRow: UpdatesRow?
     private let helpLabel = NSTextField(wrappingLabelWithString: "")
     private var pollTimer: Timer?
     private var lastAccessibility = Permissions.accessibility
 
     var isVisible: Bool { window.isVisible }
 
-    override init() {
+    init(updateChecker: UpdateChecker?) {
         strings = CurrentLanguage.strings
+        self.updateChecker = updateChecker
         window = NSWindow(contentRect: .zero, styleMask: [.titled, .closable], backing: .buffered, defer: true)
         super.init()
         window.title = "DockPeek"
@@ -63,6 +67,18 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         screenRow.button.action = #selector(openScreenRecording)
         self.accessibilityRow = accessibilityRow
         self.screenRow = screenRow
+        var generalRows = [
+            row(strings.openAtLogin, accessory: loginSwitch),
+            row(strings.language, accessory: languagePopup),
+        ]
+        updatesRow = nil
+        if updateChecker != nil {
+            let updatesRow = UpdatesRow(strings: strings)
+            updatesRow.button.target = self
+            updatesRow.button.action = #selector(checkForUpdates)
+            self.updatesRow = updatesRow
+            generalRows.append(updatesRow.view)
+        }
 
         // Language names stay in their own language.
         languagePopup.removeAllItems()
@@ -75,10 +91,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
         let content = NSStackView(views: [
             header(),
-            section(strings.general, rows: [
-                row(strings.openAtLogin, accessory: loginSwitch),
-                row(strings.language, accessory: languagePopup),
-            ]),
+            section(strings.general, rows: generalRows),
             section(strings.permissions, rows: [accessibilityRow.view, screenRow.view], note: helpLabel),
             about(),
             footer(),
@@ -227,6 +240,10 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         helpLabel.stringValue = !accessibility ? strings.accessibilityMissingHelp
             : !screen ? strings.screenRecordingMissingHelp
             : strings.permissionsHelp
+        // The once-per-second poll also shows the result of a running check.
+        if let updateChecker {
+            updatesRow?.update(updateChecker.status)
+        }
     }
 
     /// Polls once per second, only while the window is open (design document, section 8).
@@ -283,6 +300,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         Permissions.openSystemSettings(.screenRecording)
     }
 
+    @objc private func checkForUpdates() {
+        updateChecker?.checkNow()
+        refresh()
+    }
+
     /// Closes the window. DockPeek keeps running without a Dock icon.
     @objc private func hideWindow() {
         window.close()
@@ -293,10 +315,28 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     }
 }
 
+/// A 44 pt line: the title on the left, then an icon, a status text and a small button on the right.
+@MainActor
+private func statusLine(title: String, icon: NSImageView, status: NSTextField, button: NSButton) -> NSStackView {
+    button.controlSize = .small
+    let state = NSStackView(views: [icon, status, button])
+    state.orientation = .horizontal
+    state.spacing = 6
+    // Without this the status group stretches and sits next to the title instead of at the right edge.
+    state.setHuggingPriority(.required, for: .horizontal)
+    let view = NSStackView()
+    view.orientation = .horizontal
+    view.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+    view.setViews([NSTextField(labelWithString: title)], in: .leading)
+    view.setViews([state], in: .trailing)
+    view.heightAnchor.constraint(equalToConstant: 44).isActive = true
+    return view
+}
+
 /// One permission line: name, status and a button that shows only while the permission is missing.
 @MainActor
 private final class PermissionRow {
-    let view = NSStackView()
+    let view: NSStackView
     let button: NSButton
     private let icon = NSImageView()
     private let status = NSTextField(labelWithString: "")
@@ -305,17 +345,7 @@ private final class PermissionRow {
     init(title: String, strings: UIStrings) {
         self.strings = strings
         button = NSButton(title: strings.openSettings, target: nil, action: nil)
-        button.controlSize = .small
-        let state = NSStackView(views: [icon, status, button])
-        state.orientation = .horizontal
-        state.spacing = 6
-        // Without this the status group stretches and sits next to the title instead of at the right edge.
-        state.setHuggingPriority(.required, for: .horizontal)
-        view.orientation = .horizontal
-        view.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
-        view.setViews([NSTextField(labelWithString: title)], in: .leading)
-        view.setViews([state], in: .trailing)
-        view.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        view = statusLine(title: title, icon: icon, status: status, button: button)
     }
 
     func update(granted: Bool) {
@@ -328,6 +358,41 @@ private final class PermissionRow {
         status.stringValue = granted ? strings.allowed : strings.notAllowed
         status.textColor = color
         button.isHidden = granted
+    }
+}
+
+/// The Updates line: the result of the last check and the Check Now button.
+@MainActor
+private final class UpdatesRow {
+    let view: NSStackView
+    let button: NSButton
+    private let icon = NSImageView()
+    private let status = NSTextField(labelWithString: "")
+    private let strings: UIStrings
+
+    init(strings: UIStrings) {
+        self.strings = strings
+        button = NSButton(title: strings.checkNow, target: nil, action: nil)
+        view = statusLine(title: strings.updates, icon: icon, status: status, button: button)
+    }
+
+    func update(_ check: UpdateCheckStatus) {
+        status.stringValue = strings.updateStatus(check)
+        switch check {
+        case .upToDate:
+            icon.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: nil)
+            icon.contentTintColor = .statusGood
+            status.textColor = .statusGood
+        case .failed:
+            icon.image = NSImage(systemSymbolName: "exclamationmark.circle", accessibilityDescription: nil)
+            icon.contentTintColor = .statusBad
+            status.textColor = .statusBad
+        case .idle, .checking, .available:
+            icon.image = nil
+            status.textColor = .secondaryLabelColor
+        }
+        icon.isHidden = icon.image == nil
+        button.isEnabled = check != .checking
     }
 }
 
