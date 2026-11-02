@@ -45,8 +45,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         // The Dock icon is visible only while this window is open (design document, section 6.6).
         NSApp.setActivationPolicy(.regular)
         window.center()
-        NSApp.activate()
+        // The window first: macOS refuses to bring forward an app with no window on screen.
         window.makeKeyAndOrderFront(nil)
+        // Visible above other apps even if macOS refuses the activation below.
+        window.orderFrontRegardless()
+        NSApp.activate()
     }
 
     func windowWillClose(_ notification: Notification) {

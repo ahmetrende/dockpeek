@@ -111,6 +111,11 @@ final class UpdateInstaller {
         }
         UserDefaults.standard.set(true, forKey: Self.justUpdatedKey)
         Log.update.notice("installed \(newVersion.description, privacy: .public), restarting")
+        // macOS lets an app come to the front only when the active app allows it. Without this the
+        // new version's settings window stays behind other windows ("activation count being 0").
+        if let identifier = Bundle.main.bundleIdentifier {
+            NSApp.yieldActivation(toApplicationWithBundleIdentifier: identifier)
+        }
         NSApp.terminate(nil)
     }
 
