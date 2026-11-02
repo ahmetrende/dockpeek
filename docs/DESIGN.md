@@ -49,6 +49,15 @@ Pure logic lives in `DockPeekCore` and has unit tests. AppKit, Accessibility and
 | Memory (`phys_footprint`) | under 50 MB | 27 MB, peak 29 MB |
 | Idle CPU | about 0 % | 0.29 % average, 1.2 % peak (60 s, settings window open) |
 
+## Release results (2026-11-03, macOS 27)
+
+| Check | Result |
+| --- | --- |
+| `install.sh` from GitHub | 0.2.0 installed and opened, no quarantine, no Gatekeeper dialog |
+| DMG downloaded with a browser | First launch blocked once. "Open Anyway" opened it |
+| Update 0.2.0 → 0.2.1 (DMG install, automatic check) | Restarted 1.0 s after install. No Gatekeeper dialog. Permissions kept |
+| Update 0.2.1 → 0.2.2 (Check Now) | Restarted 0.8 s after install. Permissions kept |
+
 ## Learned on macOS 27
 
 - A minimized window reports the subrole `AXDialog`. So do all windows of a hidden (Cmd+H) app. Minimized windows skip the subrole check. Hidden apps show only their minimized windows.
@@ -56,6 +65,7 @@ Pure logic lives in `DockPeekCore` and has unit tests. AppKit, Accessibility and
 - The Dock does not always clear its selection when the pointer leaves. A mouse monitor runs while the panel is open.
 - ScreenCaptureKit can capture minimized windows.
 - With only Command Line Tools, Swift Build sometimes drops the Swift Testing macro plugin. `Package.swift` passes it explicitly.
+- Copies made on the build Mac carry its `com.apple.provenance`. In local tests, Gatekeeper blocked such a copy again after an update. Real downloads were not blocked after an update. Test Gatekeeper behavior with real releases.
 
 ## Open questions
 
